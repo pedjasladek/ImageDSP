@@ -100,7 +100,39 @@ void bicubicInterpolate(uchar input[], int xSize, int ySize, uchar output[], int
 
 void imageRotate(const uchar input[], int xSize, int ySize, uchar output[], int m, int n, double angle)
 {
-	/* TO DO */
+    uchar *yOld = new uchar[xSize * ySize]();
+    uchar *yNew = new uchar[xSize * xSize]();
+    char *vOld = new char[xSize * ySize / 4]();
+    char *uOld = new char[xSize * ySize / 4]();
+    char *vNew = new char[xSize * xSize / 4]();
+    char *uNew = new char[xSize * xSize / 4]();
+
+    RGBtoYUV420(input, xSize, ySize, yOld, uOld, vOld);
+
+    angle = angle * M_PI / 180;
+    for(int i = 0; i < xSize; i++)
+    {
+        for(int j = 0; j < ySize; j++)
+        {
+            int xCoord = i*cos(angle) - j*sin(angle)-m*cos(angle)+n*sin(angle)+m + 0.5;
+            int yCoord = j*cos(angle) + i*sin(angle)-m*sin(angle)-n*cos(angle)+n+0.5;
+            if(xCoord < xSize && yCoord < ySize && xCoord >= 0 && yCoord >= 0)
+            {
+                yNew[j*xSize+i] = yOld[yCoord*xSize+xCoord];
+            }else
+            {
+                yNew[j*xSize+i] = 0;
+            }
+        }
+    }
+    YUV420toRGB(yNew, uNew, vNew, xSize, ySize, output);
+
+    delete[] yOld;
+    delete[] yNew;
+    delete[] uOld;
+    delete[] uNew;
+    delete[] vOld;
+    delete[] vNew;
 }
 
 void imageRotateBilinear(const uchar input[], int xSize, int ySize, uchar output[], int m, int n, double angle)
