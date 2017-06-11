@@ -145,5 +145,64 @@ void imageRotate(const uchar input[], int xSize, int ySize, uchar output[], int 
 
 void imageRotateBilinear(const uchar input[], int xSize, int ySize, uchar output[], int m, int n, double angle)
 {
-	/* TO DO */
+    uchar *yOld = new uchar[xSize * ySize]();
+    uchar *yNew = new uchar[xSize * xSize]();
+    char *vOld = new char[xSize * ySize / 4]();
+    char *uOld = new char[xSize * ySize / 4]();
+    char *vNew = new char[xSize * xSize / 4]();
+    char *uNew = new char[xSize * xSize / 4]();
+
+    RGBtoYUV420(input, xSize, ySize, yOld, uOld, vOld);
+
+    angle = angle * M_PI / 180;
+    for(int i = 0; i < xSize; i++)
+    {
+        for(int j = 0; j < ySize; j++)
+        {
+            double a = i*cos(angle) - j*sin(angle)-m*cos(angle)+n*sin(angle)+m;
+            double b = j*cos(angle) + i*sin(angle)-m*sin(angle)-n*cos(angle)+n;
+            int al = a;
+            int bl = b;
+            int ah = al;
+            int bh = bl;
+            if(al < xSize - 1)
+            {
+                ah ++;
+            }
+            if(bl < xSize - 1)
+            {
+                bh ++;
+            }
+            b -= (int)b;
+            a -= (int)a;
+            if(al < xSize && bl < ySize && ah < xSize && bh < ySize && ah >= 0 && bh >= 0 && al >= 0 && bl >= 0)
+            {
+                yNew[j*xSize+i] = (1-a)*(1-b)*yOld[bl*xSize + al] + (1-a)*b*yOld[bh*xSize + al]
+                        + a*(1-b)*yOld[bl*xSize +  ah] + a*b*yOld[bh*xSize + ah];
+                if (!(j%2) && !(i%2))
+                {
+                    uNew[j / 2 * xSize / 2 + i / 2] = (1-a)*(1-b)*uOld[bl / 2 * xSize / 2 + al / 2] + (1-a)*b*uOld[bh / 2 * xSize / 2 + al / 2]
+                        + a*(1-b)*uOld[bl / 2 * xSize / 2 +  ah / 2] + a*b*uOld[bh / 2 * xSize / 2 + ah / 2];
+                    vNew[j / 2 * xSize / 2 + i / 2] = (1-a)*(1-b)*vOld[bl / 2 * xSize / 2 + al / 2] + (1-a)*b*vOld[bh / 2 * xSize / 2 + al / 2]
+                        + a*(1-b)*vOld[bl / 2 * xSize / 2 +  ah / 2] + a*b*vOld[bh / 2 * xSize / 2 + ah / 2];
+                }
+            }else
+            {
+                yNew[j*xSize+i] = 0;
+                if (!(j%2) && !(i%2))
+                {
+                    uNew[j/2*xSize/2+i/2] = 0;
+                    vNew[j/2*xSize/2+i/2] = 0;
+                }
+            }
+        }
+    }
+    YUV420toRGB(yNew, uNew, vNew, xSize, ySize, output);
+
+    delete[] yOld;
+    delete[] yNew;
+    delete[] uOld;
+    delete[] uNew;
+    delete[] vOld;
+    delete[] vNew;
 }
